@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async headers() {
+    return [
+      {
+        source: "/",
+        headers: [{ key: "Vary", value: "Accept" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
