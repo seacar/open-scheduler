@@ -58,6 +58,24 @@ Open times stay hidden until Calendar is connected. If the Google consent screen
 
 Signing out clears the session only. Disconnecting the calendar is a separate button and deletes the refresh token.
 
+## On a page you already have
+
+`/` is the full booking site. To put the same widget on a site you already run, add this where it should appear. Use the origin from `NEXT_PUBLIC_BASE_URL`. The signed-in admin page shows the snippet with that origin filled in.
+
+```html
+<div data-open-scheduler></div>
+<script src="https://your-host.example/embed.js" async></script>
+```
+
+`embed.js` is served by this app. It inserts a frame pointed at `/embed` on this host, so the widget uses the hours and calendar already configured here. The element fires `open-scheduler:booked` when a meeting is booked. `data-height` sets the frame height, in pixels, before the first measurement.
+
+A custom element works the same way:
+
+```html
+<script src="https://your-host.example/embed.js" async></script>
+<open-scheduler></open-scheduler>
+```
+
 ## For agents
 
 Anonymous callers can read availability and place a five-minute hold. Creating the meeting takes the human confirm page, or an agent key with the `book` scope.

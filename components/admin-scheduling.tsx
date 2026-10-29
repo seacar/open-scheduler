@@ -31,6 +31,7 @@ import {
 import { GoogleSetupPanel } from "@/components/google-setup-panel";
 import { SchedulingStatusCard } from "@/components/scheduling-status-card";
 import type { AgentKeySummary, SchedulingSettings, WeekWindow } from "@/lib/scheduling-types";
+import { siteBase } from "@/lib/site";
 import { AlertCircle, CalendarOff, ShieldAlert } from "lucide-react";
 
 const TIME_ZONES = [
@@ -81,6 +82,10 @@ function defaultDays(): DayDraft[] {
   }));
 }
 
+function embedSnippet(origin: string): string {
+  return `<div data-open-scheduler></div>\n<script src="${origin}/embed.js" async></script>`;
+}
+
 function daysFromWindows(windows: WeekWindow[]): DayDraft[] {
   return DAY_LABELS.map((_, day) => {
     const match = windows.find((window) => window.dayOfWeek === day);
@@ -102,6 +107,8 @@ export function AdminScheduling({
   email: string;
   connectStatus: "connected" | "denied" | "error" | "setup" | "session" | null;
 }) {
+  const [embedOrigin, setEmbedOrigin] = useState(() => siteBase());
+  const [copiedEmbed, setCopiedEmbed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -162,6 +169,11 @@ export function AdminScheduling({
       cancelled = true;
     };
   }, [reloadKey]);
+
+  useEffect(() => {
+    if (embedOrigin) return;
+    setEmbedOrigin(window.location.origin);
+  }, [embedOrigin]);
 
   const timeZones = TIME_ZONES.includes(settings.timezone)
     ? TIME_ZONES
@@ -717,6 +729,32 @@ export function AdminScheduling({
             </ul>
           )}
         </div>
+
+        {embedOrigin ? (
+          <div className="space-y-3">
+            <h3 className="text-sm font-medium">Embed on your site</h3>
+            <p className="text-sm text-muted-foreground">
+              Add this to a page you already have. It shows the same booking widget and uses the hours saved here. The page at / stays available.
+            </p>
+            <pre className="overflow-x-auto rounded-md border border-border bg-muted/40 p-3 text-xs">
+              <code>{embedSnippet(embedOrigin)}</code>
+            </pre>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(embedSnippet(embedOrigin));
+                  setCopiedEmbed(true);
+                } catch {
+                  setError("Could not copy the embed code.");
+                }
+              }}
+            >
+              {copiedEmbed ? "Copied" : "Copy embed code"}
+            </Button>
+          </div>
+        ) : null}
         </>
         )}
       </CardContent>
