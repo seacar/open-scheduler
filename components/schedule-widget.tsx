@@ -100,8 +100,10 @@ function safeMeetUrl(url: string | null): string | null {
 
 export function ScheduleWidget({
   initial = null,
+  embedded = false,
 }: {
   initial?: ViewState;
+  embedded?: boolean;
 }) {
   const timeZone = useTimeZone();
   const [view, setView] = useState<ViewState>(initial);
@@ -129,6 +131,16 @@ export function ScheduleWidget({
       cancelled = true;
     };
   }, []);
+
+  const bookedAt = confirmation?.startsAt ?? null;
+
+  useEffect(() => {
+    if (!embedded || !bookedAt || window.parent === window) return;
+    window.parent.postMessage(
+      { source: "open-scheduler", type: "booked", startsAt: bookedAt },
+      "*"
+    );
+  }, [embedded, bookedAt]);
 
   const slotsByDay = useMemo(() => {
     const grouped = new Map<string, string[]>();
@@ -219,12 +231,23 @@ export function ScheduleWidget({
           )}
           {confirmation.cancelPath.startsWith("/schedule/cancel?") ? (
             <p className="text-sm">
-              <Link
-                href={confirmation.cancelPath}
-                className="text-primary underline-offset-4 hover:underline"
-              >
-                Cancel this meeting
-              </Link>
+              {embedded ? (
+                <a
+                  href={confirmation.cancelPath}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  Cancel this meeting
+                </a>
+              ) : (
+                <Link
+                  href={confirmation.cancelPath}
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  Cancel this meeting
+                </Link>
+              )}
             </p>
           ) : null}
         </CardContent>
@@ -420,11 +443,13 @@ export function ScheduleWidget({
           </div>
         )}
 
-        <p className="text-sm">
-          <Link href="/" className="text-primary underline-offset-4 hover:underline">
-            Back to site
-          </Link>
-        </p>
+        {embedded ? null : (
+          <p className="text-sm">
+            <Link href="/" className="text-primary underline-offset-4 hover:underline">
+              Back to site
+            </Link>
+          </p>
+        )}
       </CardContent>
     </Card>
   );
